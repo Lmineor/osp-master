@@ -7,3 +7,20 @@ export const fetchData = query => {
         params: query
     });
 };
+
+
+export const getConfigedOpenstacks = query => {
+    return request({
+        url: '/openstack/config',
+        method: 'get',
+        params: query
+    })
+}
+
+export const saveOpenStacksConfig = data => {
+    return request({
+        url: '/openstack/config',
+        method: 'put',
+        data: data
+    })
+}
