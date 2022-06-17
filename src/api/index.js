@@ -7,9 +7,36 @@ export const fetchData = query => {
         params: query
     });
 };
+export const runVxlanNetwork = (params) => {
+  return request({
+    url: '/openstack/network',
+    method: 'get',
+    params
+  })
+};
+export const runSubnet = (params) => {
+  return request({
+    url: '/openstack/subnet',
+    method: 'get',
+    params
+  })
+};
+export const runPort = (params) => {
+  return request({
+    url: '/openstack/port',
+    method: 'get',
+    params
+  })
+};
+export const runRouter = (params) => {
+  return request({
+    url: '/openstack/router',
+    method: 'get',
+    params
+  })
+}
 
-
-export const getConfigedOpenstacks = query => {
+export const getConfigedOpenstacks = (query) => {
     return request({
         url: '/openstack/config',
         method: 'get',
@@ -20,7 +47,15 @@ export const getConfigedOpenstacks = query => {
 export const saveOpenStacksConfig = data => {
     return request({
         url: '/openstack/config',
-        method: 'put',
+        method: 'post',
         data: data
     })
 }
+export const reloadCfg = (data) => {
+    return request({
+        url: '/openstack/reload_config',
+        method: 'get',
+        params: data
+    })
+}
+

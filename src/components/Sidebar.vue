@@ -47,10 +47,28 @@ export default {
                 icon: "el-icon-lx-cascades",
                 index: "/osp",
                 title: "openstack云平台",
+                subs: [
+                    {
+                        index: "/network",
+                        title: "网络",
+                    },
+                    {
+                        index: "/404",
+                        title: "子网",
+                    },
+                    {
+                        index: "/404",
+                        title: "端口",
+                    },
+                    {
+                        index: "/404",
+                        title: "路由",
+                    },
+                ],
             },
             {
                 icon: "el-icon-lx-copy",
-                index: "/tabs",
+                index: "/config",
                 title: "配置",
             },
             // {
@@ -142,13 +160,16 @@ export default {
     bottom: 0;
     overflow-y: scroll;
 }
+
 .sidebar::-webkit-scrollbar {
     width: 0;
 }
+
 .sidebar-el-menu:not(.el-menu--collapse) {
     width: 250px;
 }
-.sidebar > ul {
+
+.sidebar>ul {
     height: 100%;
 }
 </style>

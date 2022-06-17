@@ -39,12 +39,12 @@ const routes = [
                 },
                 component: () => import ( /* webpackChunkName: "form" */ "../views/BaseForm.vue")
             }, {
-                path: "/tabs",
-                name: "tabs",
+                path: "/config",
+                name: "config",
                 meta: {
-                    title: 'tab标签'
+                    title: '配置'
                 },
-                component: () => import ( /* webpackChunkName: "tabs" */ "../views/Tabs.vue")
+                component: () => import ( /* webpackChunkName: "config" */ "../views/config.vue")
             }, {
                 path: "/donate",
                 name: "donate",
@@ -109,6 +109,13 @@ const routes = [
                     title: '富文本编辑器'
                 },
                 component: () => import (/* webpackChunkName: "editor" */ '../views/Editor.vue')
+            }, {
+                path: '/network',
+                name: 'network',
+                meta: {
+                    title: '网络'
+                },
+                component: () => import (/* webpackChunkName: "network" */ '../views/network.vue')
             }
         ]
     }, {
