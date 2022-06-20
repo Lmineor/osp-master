@@ -194,7 +194,6 @@ export default {
 }
 .table_area {
   margin-top: 15px;
-  ;
 }
 </style>
 
