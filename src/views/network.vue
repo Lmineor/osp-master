@@ -39,13 +39,10 @@
       <el-divider />
       <div class="table_area">
         <el-table :data="tableData" stripe style="width: 100%" v-loading="loading">
-          <el-table-column prop="version" label="版本" width="100"></el-table-column>
-          <el-table-column prop="url" label="IP" width="150"></el-table-column>
-          <el-table-column prop="name" label="云平台用户名" width="150"></el-table-column>
-          <el-table-column prop="password" label="云平台密码" width="150"></el-table-column>
-          <el-table-column prop="domain" label="租户" width="120"></el-table-column>
-          <el-table-column prop="controller_username" label="后台用户名" width="150"></el-table-column>
-          <el-table-column prop="controller_password" label="后台密码" width="120"></el-table-column>
+          <el-table-column prop="version" label="版本" width="120"></el-table-column>
+          <el-table-column prop="name" label="name" width="200"></el-table-column>
+          <el-table-column prop="attrs" label="是否是外部网络" width="150"></el-table-column>
+          <el-table-column prop="id" label="id" width="300"></el-table-column>
           <el-table-column label="操作" align="center">
             <template #default="scope">
               <el-button type="text" size="small" @click.prevent="handleDelete(scope.$index)">删除</el-button>
@@ -60,18 +57,18 @@
 </template>
 
 <script>
-
+import { getNetworks } from '../api';
 import { ElNotification } from 'element-plus'
 
 export default {
   name: "network",
   methods: {
     get_networks() {
-      if (this.selected_versions.length < 1) {
-        this.loading = false;
-      } else {
-        this.loading = true
+      this.loading = true
+      if (this.selected_versions.length >= 1) {
+        const nets = getNetworks(this.selected_versions);
       }
+      this.loading = false;
     },
     createNetwork() {
       if (this.selected_versions.length < 1) {
@@ -136,23 +133,17 @@ export default {
       },
 
       tableData: [{
-        "version": "pike",
-        "url": "99.0.85.123",
-        "name": "admin",
-        "password": "123456",
-        "domain": "admin",
-        "controller_username": "admin",
-        "controller_password": "123456"
+        "name": "P-ext-net",
+        "id": "15d1c502-a888-4921-994f-e8940fcdfdc7",
+        "attrs": true,
+        "version": "pike"
       },
       {
-        "version": "train",
-        "url": "99.0.85.23",
-        "name": "admin",
-        "password": "123456",
-        "domain": "admin",
-        "controller_username": "admin",
-        "controller_password": "123456"
-      }],
+        "name": "network",
+        "id": "1dff171b-7347-40dc-9a2b-a8865481e25a",
+        "attrs": false,
+        "version": "pike"
+      },],
     }
   }
 }

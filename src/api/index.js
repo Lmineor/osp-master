@@ -59,3 +59,35 @@ export const reloadCfg = (data) => {
     })
 }
 
+export const getNetworks = (params) => {
+  return request({
+    url: '/openstack/networks',
+    method:'get',
+    params:params
+  })
+}
+
+
+export const createNetwork = (data) =>{
+  return request({
+    url:'/openstack/network',
+    method:'post',
+    data: data
+  })
+}
+
+export const deleteNetworkByIds = (data) =>{
+  return request({
+    url:'/openstack/network',
+    method:'delete',
+    data: data
+  })
+}
+
+export const updateNetwork = (data) =>{
+  return request({
+    url:'/openstack/network',
+    method:'put',
+    data: data
+  })
+}
