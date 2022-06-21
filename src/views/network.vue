@@ -5,6 +5,12 @@
         <el-form-item label="名称（可选）">
           <el-input v-model="networkCreateData.name" placeholder="" class="label_input"></el-input>
         </el-form-item>
+        <el-form-item>
+          <el-select v-model="networkCreateData.networkType" placeholder="pike" class="label_input">
+            <el-option label="vlan" value="vlan"></el-option>
+            <el-option label="vxlan" value="vxlan"></el-option>
+          </el-select>
+        </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
@@ -57,17 +63,28 @@
 </template>
 
 <script>
-import { getNetworks } from '../api';
+import { getNetworks,createNetwork } from '../api';
 import { ElNotification } from 'element-plus'
 
 export default {
   name: "network",
   methods: {
-    get_networks() {
-      this.loading = true
-      if (this.selected_versions.length >= 1) {
-        const nets = getNetworks(this.selected_versions);
+    async get_networks() {
+      if (this.selected_versions.length <1) {
+        return
       }
+      this.loading = true
+      const nets = await getNetworks(this.selected_versions);
+      if (nets.data.status != 200){
+        ElNotification({
+          title: "错误",
+          message: "加载失败，请检查后台日志",
+          type: "error",
+        });
+        this.loading = false;
+        return
+      }
+      this.tableData = nets.data.networks
       this.loading = false;
     },
     createNetwork() {
@@ -83,6 +100,20 @@ export default {
     },
     onCreateNetwork() {
       console.log(this.networkCreateData)
+      const res = createNetwork(this.networkCreateData)
+      if (res.data.status==='ok'){
+        ElNotification({
+          title: "成功",
+          message: "网络创建成功",
+          type: "success",
+        })
+      }else{
+        ElNotification({
+          title: "错误",
+          message: res.data.msg,
+          type: "error",
+        })
+      }
     },
     deleteAllNetworks() {
       if (this.selected_versions.length < 1) {
@@ -130,6 +161,7 @@ export default {
       ],
       networkCreateData: {
         name: "",
+        networkType: ""
       },
 
       tableData: [{
