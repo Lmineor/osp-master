@@ -64,7 +64,7 @@
 </template>
 
 <script>
-import { getNetworks,createNetwork,getConfigedOpenstacks } from '../api';
+import { getNetworks,createNetwork,getConfigedOpenstacks,deleteNetwork } from '../api';
 import { ElNotification } from 'element-plus'
 
 export default {
