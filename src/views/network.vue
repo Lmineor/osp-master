@@ -126,7 +126,7 @@ export default {
       };
       this.deleteDialogVisible = true;
     },
-    handleDelete(index) {
+    async handleDelete(index) {
      const res = await deleteNetwork({'version': this.tableData[index].version, 'net_id': this.tableData[index].id})
       if (res.data.status==='ok'){
           this.$message.success("删除成功");
