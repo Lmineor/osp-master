@@ -117,6 +117,7 @@ export default {
       this.creatingNetwork=false;
       this.get_networks();
       this.dialogCreateNetworkVisible=false;
+      this.$forceUpdate();
     },
     deleteAllNetworks() {
       if (this.selected_version === "") {
@@ -126,9 +127,14 @@ export default {
       this.deleteDialogVisible = true;
     },
     handleDelete(index) {
-      console.log(this.tableData[index].id);
-      console.log(this.tableData[index].version);
-      this.$message.success("成功");
+     const res = await deleteNetwork({'version': this.tableData[index].version, 'net_id': this.tableData[index].id})
+      if (res.data.status==='ok'){
+          this.$message.success("删除成功");
+      }else{
+          this.$message.error(res.data.msg);
+      };
+      this.get_networks();
+      this.$forceUpdate();
     },
     handleEdit(index){},
     reset_formData(){
