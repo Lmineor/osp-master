@@ -15,7 +15,7 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="dialogCreateNetworkVisible = false">取消</el-button>
-          <el-button type="primary" @click="onCreateNetwork">确认</el-button>
+          <el-button type="primary" @click="onCreateNetwork" :loading="creatingNetwork">确认</el-button>
         </span>
       </template>
     </el-dialog>
@@ -35,16 +35,16 @@
     </div>
     <div class="container">
       <span class="text">请选择要默认的openstack的版本号：</span>
-      <el-select v-model="selected_versions" multiple placeholder="Select" style="width: 240px"
+      <el-select v-model="selected_version" multiple placeholder="Select" style="width: 240px"
         @visible-change="get_networks">
         <el-option v-for="version in versions" :label="version" :value="version" />
       </el-select>
       <el-divider content-position="left">操作</el-divider>
-      <el-button @click="createNetwork" type="primary" :loading="creatingNetwork">新建网络</el-button>
+      <el-button @click="createNetwork" type="primary">新建网络</el-button>
       <el-button @click="deleteAllNetworks" type="warning" :loading="deletingnetworks">删除所有网络</el-button>
       <el-divider />
       <div class="table_area">
-        <el-table :data="tableData" stripe style="width: 100%" v-loading="loading">
+        <el-table :data="tableData" stripe style="width: 100%" v-loading="loading" :key="isKey">
           <el-table-column prop="version" label="版本" width="120"></el-table-column>
           <el-table-column prop="name" label="name" width="200"></el-table-column>
           <el-table-column prop="attrs" label="是否是外部网络" width="150"></el-table-column>
@@ -63,24 +63,33 @@
 </template>
 
 <script>
-import { getNetworks,createNetwork } from '../api';
+import { getNetworks,createNetwork,getConfigedOpenstacks } from '../api';
 import { ElNotification } from 'element-plus'
 
 export default {
   name: "network",
+  created(){
+    this.loadVersion();
+  },
   methods: {
+    async loadVersion() {
+      const result = await getConfigedOpenstacks()
+      if (result.openstacks === null) {
+        this.versions = [];
+        return
+      }
+      for (var i=0;i<result.openstacks.length;i++){
+        this.versions.push(result.openstacks[i].version)
+      };
+    },
     async get_networks() {
-      if (this.selected_versions.length <1) {
+      if (this.selected_version === "") {
         return
       }
       this.loading = true
-      const nets = await getNetworks(this.selected_versions);
+      const nets = await getNetworks({'versions': this.selected_version});
       if (nets.data.status != 200){
-        ElNotification({
-          title: "错误",
-          message: "加载失败，请检查后台日志",
-          type: "error",
-        });
+        this.$message.error("加载失败，请检查后台日志");
         this.loading = false;
         return
       }
@@ -89,93 +98,60 @@ export default {
     },
     createNetwork() {
       if (this.selected_versions.length < 1) {
-        ElNotification({
-          title: "警告！",
-          message: "请选择要新建网络的openstack版本号",
-          type: "error",
-        })
+        this.$message.error("请选择要新建网络的openstack版本号");
         return
       };
       this.dialogCreateNetworkVisible=true;
     },
-    onCreateNetwork() {
-      console.log(this.networkCreateData)
-      const res = createNetwork(this.networkCreateData)
+    async onCreateNetwork() {
+      this.creatingNetwork=true;
+      const res = await createNetwork(this.networkCreateData);
       if (res.data.status==='ok'){
-        ElNotification({
-          title: "成功",
-          message: "网络创建成功",
-          type: "success",
-        })
+          this.$message.success("创建成功");
       }else{
-        ElNotification({
-          title: "错误",
-          message: res.data.msg,
-          type: "error",
-        })
-      }
+          this.$message.error(res.data.msg);
+      };
+      this.reset_formData();
+      this.creatingNetwork=true;
+      this.isKey = !this.isKey;
+      this.get_networks();
+      this.dialogCreateNetworkVisible=false;
     },
     deleteAllNetworks() {
-      if (this.selected_versions.length < 1) {
-        ElNotification({
-          title: "警告！",
-          message: "请选择要删除网络的openstack版本号",
-          type: "error",
-        })
+      if (this.selected_version === "") {
+        this.$message.error("请选择要删除网络的openstack版本号");
         return
       };
-      this.notifySelectedVersions = this.selected_versions.join(",");
       this.deleteDialogVisible = true;
     },
     handleDelete(index) {
-      this.successNotify(index);
+      this.$message.success("成功");
     },
-    successNotify(message) {
-      ElNotification({
-        title: "成功",
-        message: message,
-        type: "success",
-      })
-    },
-    failNotify(message) {
-      ElNotification({
-        title: "失败",
-        message: message,
-        type: "error",
-      })
-    },
+    reset_formData(){
+     this.networkCreateData= {
+        version: "",
+        name: "",
+        network_type: ""
+      }
+   },
   },
   data() {
     return {
+      isKey: false, // table数据实时刷新
       notifySelectedVersions: "",
       deleteDialogVisible: false,
       dialogCreateNetworkVisible: false,
-      selected_versions: [],
+      selected_version: "",
       loading: false,
       deletingnetworks: false,
       creatingNetwork: false,
-      versions: [
-        "pike",
-        "rocky",
-        "train"
-      ],
+      versions: [],
       networkCreateData: {
         name: "",
-        networkType: ""
+        network_type: "",
+        version: ""
       },
-
-      tableData: [{
-        "name": "P-ext-net",
-        "id": "15d1c502-a888-4921-994f-e8940fcdfdc7",
-        "attrs": true,
-        "version": "pike"
-      },
-      {
-        "name": "network",
-        "id": "1dff171b-7347-40dc-9a2b-a8865481e25a",
-        "attrs": false,
-        "version": "pike"
-      },],
+      tableData: [],
     }
   }
 }
