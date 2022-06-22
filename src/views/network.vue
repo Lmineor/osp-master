@@ -35,8 +35,8 @@
     </div>
     <div class="container">
       <span class="text">请选择要默认的openstack的版本号：</span>
-      <el-select v-model="selected_version" multiple placeholder="Select" style="width: 240px"
-        @visible-change="get_networks">
+      <el-select v-model="selected_version" placeholder="Select" style="width: 240px"
+        @change="get_networks">
         <el-option v-for="version in versions" :label="version" :value="version" />
       </el-select>
       <el-divider content-position="left">操作</el-divider>
