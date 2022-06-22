@@ -5,8 +5,8 @@
         <el-form-item label="名称（可选）">
           <el-input v-model="networkCreateData.name" placeholder="" class="label_input"></el-input>
         </el-form-item>
-        <el-form-item>
-          <el-select v-model="networkCreateData.networkType" placeholder="pike" class="label_input">
+        <el-form-item label="网络类型">
+          <el-select v-model="networkCreateData.network_type" placeholder="vxlan" class="label_input">
             <el-option label="vlan" value="vlan"></el-option>
             <el-option label="vxlan" value="vxlan"></el-option>
           </el-select>
@@ -44,7 +44,7 @@
       <el-button @click="deleteAllNetworks" type="warning" :loading="deletingnetworks">删除所有网络</el-button>
       <el-divider />
       <div class="table_area">
-        <el-table :data="tableData" stripe style="width: 100%" v-loading="loading" :key="isKey">
+        <el-table :data="tableData" stripe style="width: 100%" v-loading="loading" :key="Math.random()">
           <el-table-column prop="version" label="版本" width="120"></el-table-column>
           <el-table-column prop="name" label="name" width="200"></el-table-column>
           <el-table-column prop="attrs" label="是否是外部网络" width="150"></el-table-column>
@@ -52,6 +52,7 @@
           <el-table-column label="操作" align="center">
             <template #default="scope">
               <el-button type="text" size="small" @click.prevent="handleDelete(scope.$index)">删除</el-button>
+              <el-button type="text" size="small" @click.prevent="handleEdit(scope.$index)">编辑</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -68,7 +69,7 @@ import { ElNotification } from 'element-plus'
 
 export default {
   name: "network",
-  created(){
+  created() {
     this.loadVersion();
   },
   methods: {
@@ -88,7 +89,7 @@ export default {
       }
       this.loading = true
       const nets = await getNetworks({'versions': this.selected_version});
-      if (nets.data.status != 200){
+      if (nets.status != 200){
         this.$message.error("加载失败，请检查后台日志");
         this.loading = false;
         return
@@ -97,7 +98,7 @@ export default {
       this.loading = false;
     },
     createNetwork() {
-      if (this.selected_versions.length < 1) {
+      if (this.selected_version==="") {
         this.$message.error("请选择要新建网络的openstack版本号");
         return
       };
@@ -105,6 +106,7 @@ export default {
     },
     async onCreateNetwork() {
       this.creatingNetwork=true;
+      this.networkCreateData.version = this.selected_version;
       const res = await createNetwork(this.networkCreateData);
       if (res.data.status==='ok'){
           this.$message.success("创建成功");
@@ -112,8 +114,7 @@ export default {
           this.$message.error(res.data.msg);
       };
       this.reset_formData();
-      this.creatingNetwork=true;
-      this.isKey = !this.isKey;
+      this.creatingNetwork=false;
       this.get_networks();
       this.dialogCreateNetworkVisible=false;
     },
@@ -125,19 +126,21 @@ export default {
       this.deleteDialogVisible = true;
     },
     handleDelete(index) {
+      console.log(this.tableData[index].id);
+      console.log(this.tableData[index].version);
       this.$message.success("成功");
     },
+    handleEdit(index){},
     reset_formData(){
      this.networkCreateData= {
         version: "",
         name: "",
         network_type: ""
       }
-   },
+   }
   },
   data() {
     return {
-      isKey: false, // table数据实时刷新
       notifySelectedVersions: "",
       deleteDialogVisible: false,
       dialogCreateNetworkVisible: false,
