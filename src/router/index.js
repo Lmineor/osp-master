@@ -116,6 +116,13 @@ const routes = [
                     title: '网络'
                 },
                 component: () => import (/* webpackChunkName: "network" */ '../views/network.vue')
+            }, {
+                path: '/subnet',
+                name: 'subnet',
+                meta: {
+                    title: '子网'
+                },
+                component: () => import (/* webpackChunkName: "network" */ '../views/subnet.vue')
             }
         ]
     }, {

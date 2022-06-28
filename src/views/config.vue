@@ -76,6 +76,8 @@
 </template>
 
 <script>
+import { useStore } from "vuex";
+import { useRouter } from "vue-router";
 import { getConfigedOpenstacks, saveOpenStacksConfig, reloadCfg } from "../api/index";
 import { ElNotification } from 'element-plus'
 export default {
@@ -84,6 +86,11 @@ export default {
     this.loadConfig()
   },
   methods: {
+    // 关闭全部标签
+    closeAllTags() {
+      this.$store.commit("clearTags");
+      this.$router.push("/config");
+    },
     refresh() {
       this.cfg_loading = true;
       this.loadConfig();
@@ -95,11 +102,12 @@ export default {
       const res = await reloadCfg()
       if (res.status === "ok") {
         this.cfg_reloading = false
-        this.successNotify("配置重新加载成功")
-        return
+        this.$message.success("配置重新加载成功");
+      }else{
+        this.$message.error("配置加载失败");
       }
-      this.failNotify("加载配置失败")
       this.cfg_reloading = false
+      this.closeAllTags();
     },
     async loadConfig() {
       const result = await getConfigedOpenstacks()
@@ -109,24 +117,9 @@ export default {
       }
       this.tableData = result.openstacks;
     },
-    successNotify(message) {
-      ElNotification({
-        title: "成功",
-        message: message,
-        type: "success",
-      })
-    },
-    failNotify(message) {
-      ElNotification({
-        title: "失败",
-        message: message,
-        type: "error",
-      })
-    },
     handleDelete(index) {
       this.tableData.splice(index, 1);
       saveOpenStacksConfig({ "openstacks": this.tableData });
-      this.successNotify("")
     },
     onSubmit() {
       this.dialogFormVisible=false;
@@ -134,7 +127,7 @@ export default {
       saveOpenStacksConfig({ "openstacks": this.tableData });
       this.resetConfig();
       getConfigedOpenstacks();
-      this.successNotify("配置保存成功！")
+      this.$message.success("配置重新保存成功");
     },
     resetConfig() {
       this.config = {

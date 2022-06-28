@@ -91,3 +91,36 @@ export const updateNetwork = (data) =>{
     data: data
   })
 }
+
+export const getSubnets = (params) => {
+  return request({
+    url: '/openstack/subnet',
+    method:'get',
+    params:params
+  })
+}
+
+
+export const createSubnet = (data) =>{
+  return request({
+    url:'/openstack/subnet',
+    method:'post',
+    data: data
+  })
+}
+
+export const deleteSubnet = (data) =>{
+  return request({
+    url:'/openstack/subnet',
+    method:'delete',
+    data: data
+  })
+}
+
+export const updateSubnet = (data) =>{
+  return request({
+    url:'/openstack/subnet',
+    method:'put',
+    data: data
+  })
+}
