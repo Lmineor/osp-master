@@ -57,7 +57,7 @@ export default {
                         title: "子网",
                     },
                     {
-                        index: "/404",
+                        index: "/port",
                         title: "端口",
                     },
                     {

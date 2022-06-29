@@ -30,6 +30,22 @@
         </span>
       </template>
     </el-dialog>
+    <el-dialog v-model="dialogUpdateSubnetVisible" title="编辑子网" width="30%">
+      <el-form :inline="false" :model="subnetUpdateData" class="form-inline" label-width="200px" label-position="left">
+        <el-form-item label="名称">
+          <el-input v-model="subnetUpdateData.name" class="label_input"></el-input>
+        </el-form-item>
+        <el-form-item label="enable dhcp">
+          <el-switch v-model="subnetUpdateData.enable_dhcp" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="dialogUpdateSubnetVisible = false">取消</el-button>
+          <el-button type="primary" @click="onUpdateSubnetApi" :loading="updatingSubnet">确认</el-button>
+        </span>
+      </template>
+    </el-dialog>
     <div class="crumbs">
       <el-breadcrumb separator="/">
         <el-breadcrumb-item><i class="el-icon-lx-copy"></i>网络</el-breadcrumb-item>
@@ -61,7 +77,11 @@
           <el-table-column prop="enable_dhcp" label="enable dhcp" width="150"></el-table-column>
           <el-table-column fixed="right" label="操作" align="center" width="150">
             <template #default="scope">
-              <el-button type="text" size="small" @click.prevent="handleDelete(scope.$index)">删除</el-button>
+              <el-popconfirm confirm-button-text="是" cancel-button-text="否" title="要删除该子网吗？" @confirm="handleDeleteApi((scope.$index))">
+                <template #reference>
+                  <el-button type="text" size="small">删除</el-button>
+                </template>
+              </el-popconfirm>
               <el-button type="text" size="small" @click.prevent="handleEdit(scope.$index)">编辑</el-button>
             </template>
           </el-table-column>
@@ -72,7 +92,7 @@
 </template>
 
 <script>
-import { getNetworks, getSubnets,createSubnet,getConfigedOpenstacks,deleteSubnet } from '../api';
+import { getNetworks, getSubnets,createSubnet,getConfigedOpenstacks,deleteSubnet, updateSubnet } from '../api';
 
 export default {
   name: "subnet",
@@ -149,9 +169,9 @@ export default {
       };
       this.deleteDialogVisible = true;
     },
-    async handleDelete(index) {
+    async handleDeleteApi(index) {
       this.loading=true;
-     const res = await deleteSubnet({'version': this.form.formData.nets[index].version, 'net_id':this.form.formData.nets[index].id})
+     const res = await deleteSubnet({'version': this.selected_version, 'id':this.tableData[index].id})
       if (res.data.status==='ok'){
         this.get_subnets();
         this.$message.success("删除成功");
@@ -161,7 +181,35 @@ export default {
       this.loading=false;
       
     },
-    handleEdit(index){},
+    handleEdit(index) {
+      this.selected_id = this.tableData[index].id;
+      this.subnetUpdateData.name = this.tableData[index].name;
+      this.dialogUpdateSubnetVisible = true;
+    },
+    async onUpdateSubnetApi(index){
+      this.updatingSubnet=true;
+      const res = await updateSubnet(
+        {
+          'version': this.selected_version,
+          'id': this.selected_id,
+          'attr': {
+            'subnet': {
+              'name': this.subnetUpdateData.name,
+              'enable_dhcp': this.subnetUpdateData.enable_dhcp
+            }
+          }
+        });
+      if (res.data.status==='ok'){
+          this.$message.success("更新成功");
+          await this.get_subnets();
+      }else{
+          this.$message.error(res.data.msg);
+      };
+      this.reset_formData();
+      this.updatingSubnet=false;
+      
+      this.dialogUpdateSubnetVisible=false;
+    },
     reset_formData(){
      this.subnetCreateData= {
         name: "",
@@ -170,11 +218,17 @@ export default {
         version: "",
         ip_version: 4,
         enable_dhcp: true,
+      };
+      this.subnetUpdateData = {
+        name: '',
+        enable_dhcp: true
       }
    }
   },
   data() {
     return {
+      selected_id: '',
+      dialogUpdateSubnetVisible: false,
       notifySelectedVersions: "",
       deleteDialogVisible: false,
       dialogCreateSubnetVisible: false,
@@ -182,9 +236,14 @@ export default {
       loading: false,
       deletingsubnets: false,
       creatingSubnet: false,
+      updatingSubnet: false,
       versions: [],
       tableData: [],
       networks: [],
+      subnetUpdateData: {
+        name: '',
+        enable_dhcp: true,
+      },
       subnetCreateData: {
         name: "",
         net_id: "",

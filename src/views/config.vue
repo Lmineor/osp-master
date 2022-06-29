@@ -1,6 +1,6 @@
 <template>
   <div class="">
-    <el-dialog v-model="dialogFormVisible" title="新增openstack 配置" width="30%">
+    <el-dialog v-model="dialogFormVisible" title="新增/编辑openstack 配置" width="30%">
       <el-form :inline="false" :model="config" class="form-inline" label-width="200px" label-position="left">
         <el-form-item label="OpenStack版本">
           <el-select v-model="config.version" placeholder="pike" class="label_input">
@@ -66,7 +66,12 @@
           <el-table-column prop="controller_password" label="后台密码" width="120"></el-table-column>
           <el-table-column label="操作" align="center">
             <template #default="scope">
-              <el-button type="text" size="small" @click.prevent="handleDelete(scope.$index)">删除</el-button>
+              <el-popconfirm confirm-button-text="是" cancel-button-text="否" title="要删除吗？" @confirm="handleDelete((scope.$index))">
+                <template #reference>
+                  <el-button type="danger" size="small">删除</el-button>
+                </template>
+              </el-popconfirm>
+              <!-- <el-button type="info" size="small" @click.prevent="handleEdit(scope.$index)">编辑</el-button> -->
             </template>
           </el-table-column>
         </el-table>
@@ -76,10 +81,9 @@
 </template>
 
 <script>
-import { useStore } from "vuex";
-import { useRouter } from "vue-router";
+
 import { getConfigedOpenstacks, saveOpenStacksConfig, reloadCfg } from "../api/index";
-import { ElNotification } from 'element-plus'
+
 export default {
   name: "config",
   created() {

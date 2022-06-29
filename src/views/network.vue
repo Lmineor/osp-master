@@ -143,7 +143,6 @@ export default {
     },
     async onUpdateNetworkApi() {
       this.updatingNetwork=true;
-      this.networkUpdateData.version = this.selected_version;
       const res = await updateNetwork(
         {
           'version': this.selected_version,
@@ -193,6 +192,9 @@ export default {
         version: "",
         name: "",
         network_type: ""
+      };
+      this.networkUpdateData = {
+        name: ""
       }
    }
   },
@@ -217,7 +219,6 @@ export default {
       },
       networkUpdateData: {
         name: "",
-        version: ""
       }
     }
   }

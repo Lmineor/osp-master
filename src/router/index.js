@@ -123,6 +123,13 @@ const routes = [
                     title: '子网'
                 },
                 component: () => import (/* webpackChunkName: "network" */ '../views/subnet.vue')
+            }, {
+                path: '/port',
+                name: 'port',
+                meta: {
+                    title: '端口'
+                },
+                component: () => import (/* webpackChunkName: "network" */ '../views/port.vue')
             }
         ]
     }, {

@@ -124,3 +124,34 @@ export const updateSubnet = (data) =>{
     data: data
   })
 }
+
+export const getPortsApi = (params) =>{
+  return request({
+    url:'/openstack/port',
+    method:'get',
+    params: params
+  })
+}
+export const createPortApi = (data) =>{
+  return request({
+    url:'/openstack/port',
+    method:'post',
+    data: data
+  })
+}
+
+export const deletePortApi = (data) =>{
+  return request({
+    url:'/openstack/port',
+    method:'delete',
+    data: data
+  })
+}
+
+export const updatePortApi = (data) =>{
+  return request({
+    url:'/openstack/port',
+    method:'put',
+    data: data
+  })
+}
