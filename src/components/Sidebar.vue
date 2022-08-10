@@ -131,6 +131,11 @@ export default {
                 index: "/donate",
                 title: "支持作者",
             },
+            {
+                icon: "el-icon-lx-punch",
+                index: "/plugin",
+                title: "插件管理",
+            },
         ];
 
         const route = useRoute();

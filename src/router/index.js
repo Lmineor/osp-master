@@ -130,6 +130,13 @@ const routes = [
                     title: '端口'
                 },
                 component: () => import (/* webpackChunkName: "network" */ '../views/port.vue')
+            }, {
+                path: '/plugin',
+                name: 'plugin',
+                meta: {
+                    title: '插件管理'
+                },
+                component: () => import ('../views/plugin_manager.vue')
             }
         ]
     }, {
