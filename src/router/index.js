@@ -131,6 +131,34 @@ const routes = [
                 },
                 component: () => import (/* webpackChunkName: "network" */ '../views/port.vue')
             }, {
+                path: '/router',
+                name: 'router',
+                meta: {
+                    title: '路由'
+                },
+                component: () => import (/* webpackChunkName: "network" */ '../views/router.vue')
+            }, {
+                path: '/security',
+                name: 'securitygroup',
+                meta: {
+                    title: '安全组'
+                },
+                component: () => import (/* webpackChunkName: "network" */ '../views/security.vue')
+            }, {
+                path: '/floatingip',
+                name: 'floatingip',
+                meta: {
+                    title: '浮动ip'
+                },
+                component: () => import (/* webpackChunkName: "network" */ '../views/floatingip.vue')
+            }, {
+                path: '/instance',
+                name: 'instance',
+                meta: {
+                    title: '实例'
+                },
+                component: () => import (/* webpackChunkName: "network" */ '../views/instance.vue')
+            }, {
                 path: '/plugin',
                 name: 'plugin',
                 meta: {

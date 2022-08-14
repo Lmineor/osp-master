@@ -7,6 +7,15 @@ export const fetchData = query => {
         params: query
     });
 };
+
+export const login = (data) => {
+  return request({
+    url: '/user/login',
+    method: 'post',
+    data:  data,
+  })
+};
+
 export const runVxlanNetwork = (params) => {
   return request({
     url: '/openstack/network',
@@ -67,6 +76,15 @@ export const getNetworks = (params) => {
   })
 }
 
+export const getSingleNetwork = (params) => {
+  return request({
+    url: '/openstack/single_network',
+    method:'get',
+    params:params
+  })
+}
+
+
 
 export const createNetwork = (data) =>{
   return request({
@@ -100,6 +118,13 @@ export const getSubnets = (params) => {
   })
 }
 
+export const getSubnetsByNetIdApi = (params) => {
+  return request({
+    url: '/openstack/subnet_by_net',
+    method:'get',
+    params:params
+  })
+}
 
 export const createSubnet = (data) =>{
   return request({
@@ -152,6 +177,104 @@ export const updatePortApi = (data) =>{
   return request({
     url:'/openstack/port',
     method:'put',
+    data: data
+  })
+}
+
+export const getRoutersApi = (params) =>{
+  return request({
+    url:'/openstack/router',
+    method:'get',
+    params: params
+  })
+}
+
+export const getRouterInterfaceApi = (params) =>{
+  return request({
+    url:'/openstack/router_interface',
+    method:'get',
+    params: params
+  })
+}
+
+export const createRouterApi = (data) =>{
+  return request({
+    url:'/openstack/router',
+    method:'post',
+    data: data
+  })
+}
+
+export const deleteRouterApi = (data) =>{
+  return request({
+    url:'/openstack/router',
+    method:'delete',
+    data: data
+  })
+}
+
+export const updateRouterApi = (data) =>{
+  return request({
+    url:'/openstack/router',
+    method:'put',
+    data: data
+  })
+}
+
+export const addRouterInterfaceApi = (data) =>{
+  return request({
+    url:'/openstack/router_interface',
+    method:'post',
+    data: data
+  })
+}
+
+
+export const removeRouterInterfaceApi = (data) =>{
+  return request({
+    url:'/openstack/router_interface',
+    method:'delete',
+    data: data
+  })
+}
+
+export const removeRouterGwApi = (data) =>{
+  return request({
+    url:'/openstack/gw',
+    method:'delete',
+    data: data
+  })
+}
+
+export const addRouterGwApi = (data) =>{
+  return request({
+    url:'/openstack/gw',
+    method:'post',
+    data: data
+  })
+}
+
+
+export const getActiveNodeApi = (params) =>{
+  return request({
+    url:'/master/nodes',
+    method: 'get',
+    params: params
+  })
+}
+
+export const changePluginApi = (data) =>{
+  return request({
+    url: '/master/change_plugin',
+    method: 'put',
+    data: data
+  })
+}
+
+export const getConfigsApi = (data) =>{
+  return request({
+    url: '/master/config',
+    method: 'post',
     data: data
   })
 }

@@ -61,8 +61,20 @@ export default {
                         title: "端口",
                     },
                     {
-                        index: "/404",
+                        index: "/router",
                         title: "路由",
+                    },
+                    {
+                        index: "/security",
+                        title: "安全组",
+                    },
+                    {
+                        index: "/floatingip",
+                        title: "浮动ip",
+                    },
+                    {
+                        index: "/instance",
+                        title: "实例",
                     },
                 ],
             },

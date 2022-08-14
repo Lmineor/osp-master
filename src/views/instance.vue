@@ -79,10 +79,10 @@
             <template #default="scope">
               <el-popconfirm confirm-button-text="是" cancel-button-text="否" title="要删除该子网吗？" @confirm="handleDeleteApi((scope.$index))">
                 <template #reference>
-                  <el-button type="danger" size="small">删除</el-button>
+                  <el-button type="text" size="small">删除</el-button>
                 </template>
               </el-popconfirm>
-              <el-button type="info" size="small" @click.prevent="handleEdit(scope.$index)">编辑</el-button>
+              <el-button type="text" size="small" @click.prevent="handleEdit(scope.$index)">编辑</el-button>
             </template>
           </el-table-column>
         </el-table>
