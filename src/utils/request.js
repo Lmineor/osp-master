@@ -1,4 +1,5 @@
 import axios from 'axios';
+import router from '../router'
 
 const service = axios.create({
     // process.env.NODE_ENV === 'development' 来判断是否开发环境
@@ -24,6 +25,7 @@ service.interceptors.request.use(
 
 service.interceptors.response.use(
     response => {
+        console.log(response.status);
         if (response.status === 200) {
             return response.data;
         } else {
@@ -31,7 +33,11 @@ service.interceptors.response.use(
         }
     },
     error => {
-        console.log(error);
+        if (error.response.status === 401){
+            // 返回 401 清除token信息并跳转到登录页面
+            localStorage.removeItem('token');
+            router.replace("/login");
+        }
         return Promise.reject();
     }
 );

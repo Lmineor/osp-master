@@ -5,9 +5,6 @@
         <el-form-item label="名称（可选）">
           <el-input v-model="routerCreateData.name" placeholder="" class="label_input"></el-input>
         </el-form-item>
-        <!-- <el-form-item label="使能dhcp">
-          <el-switch v-model="routerCreateData.enable_dhcp" />
-        </el-form-item> -->
       </el-form>
       <template #footer>
         <span class="dialog-footer">
@@ -73,7 +70,7 @@
       </el-collapse>
       <template #footer>
         <span class="dialog-footer">
-          <el-button type="primary" @click="finishEidtRouterInterface">好了</el-button>
+          <el-button type="success" @click="finishEidtRouterInterface">关闭</el-button>
         </span>
       </template>
     </el-dialog>
@@ -94,16 +91,17 @@
     </el-dialog>
     <div class="crumbs">
       <el-breadcrumb separator="/">
-        <el-breadcrumb-item><i class="el-icon-lx-copy"></i>网络</el-breadcrumb-item>
+        <el-breadcrumb-item><i class="el-icon-lx-copy"></i>路由</el-breadcrumb-item>
       </el-breadcrumb>
     </div>
     <div class="container">
       <span class="text">请选择要默认的openstack的版本号：</span>
       <el-select v-model="selected_version" placeholder="Select" style="width: 240px" @change="get_routers">
-        <el-option v-for="version in versions" :label="version" :value="version"/>
+        <el-option v-for="version in versions" :label="version.info" :value="version.version"/>
       </el-select>
       <el-divider content-position="left">操作</el-divider>
       <el-button @click="createRouter" type="primary">新建路由器</el-button>
+      <el-button @click="get_routers" type="info">刷新</el-button>
       <el-divider />
       <div class="table_area">
         <el-table v-loading="loading" :data="tableData" stripe style="width: 100%" border>
@@ -121,6 +119,7 @@
                 :type="scope.row.external_network === '添加网关信息' ? '' : 'success'"
                 :closable="scope.row.external_network === '添加网关信息' ? false : true"
                 disable-transitions
+                class="gw_tag"
                 @close="remove_router_gw(scope.$index)"
                 @click="handle_add_router_gw(scope.$index)"
                 >{{ scope.row.external_network }}</el-tag>
@@ -168,20 +167,21 @@ export default {
   methods: {
     finishEidtRouterInterface(){
       this.get_routers();
+      this.subnets = [];
       this.dialogEditRouterInterfaceVisible=false;
     },
     async loadVersion() {
       const result = await getConfigedOpenstacks()
-      if (result.openstacks === null) {
+      if (result.data === null) {
         this.versions = [];
         return
       }
-      for (var i=0;i<result.openstacks.length;i++){
-        this.versions.push(result.openstacks[i].version)
+      for (var i=0;i<result.data.length;i++){
+        this.versions.push({"version": result.data[i].version, "info": result.data[i].version + "(" + result.data[i].url + ")", "ip": result.data[i].url})
       };
     },
     handleSelectNetwork(){
-      console.log(this.router_interface_network);
+      this.subnets = [];
       this.loadSubnetsByNetId(this.router_interface_network)
     },
     // gw ****************************************************
@@ -210,6 +210,7 @@ export default {
         this.$message.error(res.data.msg);
       }
       this.adding_router_gw = false;
+      this.external_net_id = '';
       this.get_routers();
       this.dialogEditRouterGwVisible = false;
     },
@@ -224,7 +225,7 @@ export default {
       const res = await addRouterInterfaceApi({'router_id': this.selected_id, 'subnet_id': this.router_interface_subnet, 'version': this.selected_version});
       this.adding_router_interface=false;
       if (res.status != 200 || res.data.status !== "ok"){
-        this.$message.error("添加子网接口失败，请检查后台日志");
+        this.$message.error("添加子网接口失败:" + res.data.msg);
         return
       }
       this.$message.success("添加成功");
@@ -251,10 +252,16 @@ export default {
     },
     async loadSubnetsByNetId(id){
       this.router_interface_subnet="";
+      this.subnets = [];
       const res = await getSubnetsByNetIdApi({'id': id});
       if (res.status ===200){
-        this.subnets = res.data.subnets;
+        let subnets = res.data.subnets
+        for (let index = 0; index < subnets.length; index++) {
+          const element = subnets[index];
+          this.subnets.push({'name': element.name + "(" + element.cidr + ")", 'id': element.id})
+        }
       };
+      
     },
     async get_routers() {
       if (this.selected_version === "") {
@@ -297,11 +304,16 @@ export default {
     },
     async onCreateRouter() {
       this.creatingRouter=true;
-      const res = await createRouterApi(
-        {
-          'name': this.routerCreateData.name,
-          'version': this.selected_version,
+      const body = {
+        "router": {
+          "name": this.routerCreateData.name
         }
+      }
+      const param = {
+        "version": this.selected_version
+      }
+      const res = await createRouterApi(
+        body, param
       );
       if (res.data.status==='ok'){
           this.$message.success("创建成功");
@@ -364,16 +376,18 @@ export default {
     },
     async onUpdateRouter(index){
       this.updatingRouter=true;
+      const body = {
+        "router": {
+          "name": this.routerUpdateData.name
+        }
+      }
+      const param = {
+        "version": this.selected_version,
+        "id": this.selected_id
+      }
       const res = await updateRouterApi(
-        {
-          'version': this.selected_version,
-          'id': this.selected_id,
-          'attr': {
-            'router': {
-              'name': this.routerUpdateData.name
-            }
-          }
-        });
+        body, param
+        );
       if (res.data.status==='ok'){
           this.$message.success("更新成功");
           await this.get_routers();
@@ -455,5 +469,12 @@ export default {
   display: flex;
   align-items: center;
 }
+
+.gw_tag:hover{
+  cursor:pointer;
+}
+
+
 </style>
+
 

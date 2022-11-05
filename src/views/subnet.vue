@@ -5,9 +5,9 @@
         <el-form-item label="名称（可选）">
           <el-input v-model="subnetCreateData.name" placeholder="" class="label_input"></el-input>
         </el-form-item>
-        <!-- <el-form-item label="CIDR（可选）">
+        <el-form-item label="CIDR">
           <el-input v-model="subnetCreateData.cidr" placeholder="" class="label_input"></el-input>
-        </el-form-item> -->
+        </el-form-item>
         <el-form-item label="ip version">
           <el-radio-group v-model="subnetCreateData.ip_version" class="ml-4">
             <el-radio :label=4 size="large">iP V4</el-radio>
@@ -48,33 +48,28 @@
     </el-dialog>
     <div class="crumbs">
       <el-breadcrumb separator="/">
-        <el-breadcrumb-item><i class="el-icon-lx-copy"></i>网络</el-breadcrumb-item>
+        <el-breadcrumb-item><i class="el-icon-lx-copy"></i>子网</el-breadcrumb-item>
       </el-breadcrumb>
     </div>
     <div class="container">
       <span class="text">请选择要默认的openstack的版本号：</span>
       <el-select v-model="selected_version" placeholder="Select" style="width: 240px" @change="get_subnets">
-        <el-option v-for="version in versions" :label="version" :value="version"/>
+        <el-option v-for="version in versions" :label="version.info" :value="version.version"/>
       </el-select>
       <el-divider content-position="left">操作</el-divider>
       <el-button @click="createSubnetApi" type="primary">新建子网</el-button>
-      <!-- <el-button
-        @click="deleteAllSubnets"
-        type="warning"
-        :loading="deletingsubnets"
-        >删除所有网络</el-button
-      > -->
+      <el-button @click="get_subnets" type="info">刷新</el-button>
       <el-divider />
       <div class="table_area">
         <el-table v-loading="loading" :data="tableData" stripe style="width: 100%">
           <el-table-column prop="version" label="版本" width="100"></el-table-column>
-          <el-table-column prop="id" label="id" width="350"></el-table-column>
           <el-table-column prop="name" label="name" width="100"></el-table-column>
-          <el-table-column prop="network_id" label="网络id" width="350" ></el-table-column>
-          <el-table-column prop="net_name" label="网络名称" width="200"></el-table-column>
           <el-table-column prop="cidr" label="cidr" width="150"></el-table-column>
           <el-table-column prop="ip_version" label="ip版本" width="100"></el-table-column>
+          <el-table-column prop="net_name" label="网络名称" width="200"></el-table-column>
           <el-table-column prop="enable_dhcp" label="enable dhcp" width="150"></el-table-column>
+          <el-table-column prop="network_id" label="网络id" width="350" ></el-table-column>
+          <el-table-column prop="id" label="id" width="350"></el-table-column>
           <el-table-column fixed="right" label="操作" align="center" width="150">
             <template #default="scope">
               <el-popconfirm confirm-button-text="是" cancel-button-text="否" title="要删除该子网吗？" @confirm="handleDeleteApi((scope.$index))">
@@ -102,12 +97,12 @@ export default {
   methods: {
     async loadVersion() {
       const result = await getConfigedOpenstacks()
-      if (result.openstacks === null) {
+      if (result.data === null) {
         this.versions = [];
         return
       }
-      for (var i=0;i<result.openstacks.length;i++){
-        this.versions.push(result.openstacks[i].version)
+      for (var i=0;i<result.data.length;i++){
+        this.versions.push({"version": result.data[i].version, "info": result.data[i].version + "(" + result.data[i].url + ")", "ip": result.data[i].url})
       };
     },
     async loadNetworks(){
@@ -141,16 +136,18 @@ export default {
     },
     async onCreateSubnet() {
       this.creatingSubnet=true;
-      const res = await createSubnet(
-        {
-          'name': this.subnetCreateData.name,
-          'version': this.selected_version,
-          'net_id': this.subnetCreateData.net_id,
-          'ip_version': this.subnetCreateData.ip_version,
-          'cidr': this.subnetCreateData.cidr,
-          'enable_dhcp': this.subnetCreateData.enable_dhcp
+      const createBody = {
+        "subnet": {
+          "network_id": this.subnetCreateData.net_id,
+          "name": this.subnetCreateData.name,
+          "ip_version": this.subnetCreateData.ip_version,
+          "cidr": this.subnetCreateData.cidr
         }
-      );
+      };
+      const param = {
+        "version": this.selected_version
+      }
+      const res = await createSubnet(createBody, param);
       if (res.data.status==='ok'){
           this.$message.success("创建成功");
           this.get_subnets();
@@ -184,21 +181,24 @@ export default {
     handleEdit(index) {
       this.selected_id = this.tableData[index].id;
       this.subnetUpdateData.name = this.tableData[index].name;
+      this.subnetUpdateData.enable_dhcp = this.tableData[index].enable_dhcp;
+      this.subnetUpdateData.enable_dhcp = this.tableData[index].description;
       this.dialogUpdateSubnetVisible = true;
     },
     async onUpdateSubnetApi(index){
       this.updatingSubnet=true;
-      const res = await updateSubnet(
-        {
-          'version': this.selected_version,
-          'id': this.selected_id,
-          'attr': {
-            'subnet': {
-              'name': this.subnetUpdateData.name,
-              'enable_dhcp': this.subnetUpdateData.enable_dhcp
-            }
-          }
-        });
+      const param = {
+        "version": this.selected_version,
+        "id": this.selected_id
+      };
+      const body = {
+        "subnet": {
+          "name": this.subnetUpdateData.name,
+          "enable_dhcp": this.subnetUpdateData.enable_dhcp,
+          "description": this.subnetUpdateData.description
+        }
+      }
+      const res = await updateSubnet(body, param);
       if (res.data.status==='ok'){
           this.$message.success("更新成功");
           await this.get_subnets();
@@ -221,7 +221,8 @@ export default {
       };
       this.subnetUpdateData = {
         name: '',
-        enable_dhcp: true
+        enable_dhcp: true,
+        description: ""
       }
    }
   },
@@ -243,12 +244,14 @@ export default {
       subnetUpdateData: {
         name: '',
         enable_dhcp: true,
+        description: ""
       },
       subnetCreateData: {
         name: "",
         net_id: "",
         version: "",
         ip_version: 4,
+        cidr: "",
         enable_dhcp: true,
       }
     }

@@ -48,7 +48,7 @@
     </el-dialog>
     <div class="crumbs">
       <el-breadcrumb separator="/">
-        <el-breadcrumb-item><i class="el-icon-lx-copy"></i>网络</el-breadcrumb-item>
+        <el-breadcrumb-item><i class="el-icon-lx-copy"></i>安全组</el-breadcrumb-item>
       </el-breadcrumb>
     </div>
     <div class="container">

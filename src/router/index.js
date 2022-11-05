@@ -42,7 +42,7 @@ const routes = [
                 path: "/config",
                 name: "config",
                 meta: {
-                    title: '配置'
+                    title: '配置管理'
                 },
                 component: () => import ( /* webpackChunkName: "config" */ "../views/config.vue")
             }, {
@@ -165,6 +165,20 @@ const routes = [
                     title: '插件管理'
                 },
                 component: () => import ('../views/plugin_manager.vue')
+            }, {
+                path: '/plugin_config',
+                name: 'plugin_config',
+                meta: {
+                    title: '插件配置'
+                },
+                component: () => import ('../views/plugin_config.vue')
+            }, {
+                path: '/ip_allocation',
+                name: 'ip allocation',
+                meta: {
+                    title: 'ip分配记录'
+                },
+                component: () => import ('../views/ip_allocation.vue')
             }
         ]
     }, {

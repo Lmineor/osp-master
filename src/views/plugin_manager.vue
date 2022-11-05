@@ -38,13 +38,16 @@
         </div>
       </div>
       <div v-if="activeSteps === 2">
+          <el-button size="small" @click="refresh" type="primary" style="margin: 5px;">刷新</el-button>
         <div class="choosePlatform">
+          
           <el-transfer v-model="choosedPlatforms" :titles="['可选的云平台', '已选的云平台']" :data="allPlatforms" />
         </div>
       </div>
       <div v-if="activeSteps === 3">
         <div class="change">
           <el-button :loading="changingPlugin" size="small" @click="changePlugin" type="danger" style="margin: 5px;">更换插件</el-button>
+          <el-button size="small" @click="refresh" type="primary" style="margin: 5px;">刷新</el-button>
           <el-table
             :data="nodesToInstall"
             
@@ -67,19 +70,21 @@
       <div v-if="activeSteps === 4">
         <div class="config">
           <h4>请确认好配置项并保存</h4>
-          <el-button size="small" @click="" type="danger" style="margin: 5px;">全部保存并重启neutron-server</el-button>
+          <el-button size="small" @click="saveAndRestart" type="danger" style="margin: 5px;" :loading="restartingNeutronServer">全部保存并重启neutron-server</el-button>
+          <el-button size="small" @click="refresh" type="primary" style="margin: 5px;">刷新</el-button>
           <el-table
             :data="configData"
+            border
           >
-            <el-table-column prop="ip" label="ip" width="180" />
+            <el-table-column prop="ip" label="ip" width="150" />
             <el-table-column prop="version" label="版本" width="100" />
-            <el-table-column prop="status" label="neutron-server状态" width="150">
+            <el-table-column prop="status" label="neutron" width="150">
               <template #default="props">
                 <el-tag class="ml-2" type="success" v-if="props.row.neutron_status">激活</el-tag>
                 <el-tag class="ml-2" type="success" v-else effect="dark">死了</el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="service_plugins" label="service_plugins">
+            <el-table-column prop="service_plugins" label="service_plugins"  width="300">
               <template #default="props">
                 <el-input v-model="props.row.service_plugins" placeholder="Please input" />
               </template>
@@ -91,19 +96,8 @@
                   type="textarea" />
               </template>
             </el-table-column>
-            <!-- <el-table-column label="操作">
-            <template #default="scope">
-              <el-button size="small" @click="handleVerified(scope.$index)" type="primary"
-                >保存</el-button
-              >
-               <el-button size="small" @click="handleVerified(scope.$index)" type="success"
-                >重启neutron-server</el-button
-              >
-            </template>
-          </el-table-column> -->
           </el-table>
-          <h4>请确认好配置项并保存</h4>
-          <el-button size="small" @click="" type="danger" style="margin: 5px;">全部保存并重启neutron-server</el-button>
+          <el-button size="small" @click="saveAndRestart" type="danger" style="margin: 5px;" :loading="restartingNeutronServer">全部保存并重启neutron-server</el-button>
         </div>
       </div>
       <div class="button">
@@ -115,7 +109,7 @@
 </template>
 
 <script>
-import { getActiveNodeApi, changePluginApi, getConfigsApi } from '../api';
+import { getActiveNodeApi, changePluginApi, getConfigsApi, saveServicePluginsApi, saveMl2ConfApi, restartNeutronServerApi } from '../api';
 
 export default {
   name: "plugin",
@@ -129,10 +123,12 @@ export default {
                 activeNodes.push(element.ip)
             }
         }
-        console.log(activeNodes);
+        if (activeNodes.length === 0){
+            return false
+        }
         const res = await getConfigsApi({"ips": activeNodes});
-        console.log(res);
         this.configData = res.data.resp;
+        return true
     },
     async changePlugin(){
         this.changingPlugin = true;
@@ -169,6 +165,9 @@ export default {
         const nodes = res.data.nodes
         for (let index = 0; index < nodes.length; index++) {
             const element = nodes[index];
+            if (element.status === "dead"){
+                continue
+            }
             this.allPlatforms.push({"key": element.ip, "label": element.ip+"("+ element.version + ")"}) 
         }
     },
@@ -216,9 +215,53 @@ export default {
           this.prepareNodesToInstallPlugin()
       }
       if (this.activeSteps === 3){
-          this.getConfigs();
+          const flag = this.getConfigs();
+          if (!flag){
+            this.$message.error("无可用节点。")
+          }
       }
       this.activeSteps = this.activeSteps + 1;
+    },
+    refresh(){
+        this.getActiveNodes()
+        this.getConfigs();
+    },
+    async saveAndRestart(){
+        this.restartingNeutronServer = true;
+        let service_plugins_body = {};
+        let service_plugins_list = [];
+        let ml2_conf_body = {};
+        let ml2_conf_list = [];
+        let restartList = [];
+        let restartBody = {};
+        if (this.configData.length === 0){
+            this.restartingNeutronServer = false;
+            return
+        }
+        for (let index = 0; index < this.configData.length; index++) {
+            const element = this.configData[index];
+            service_plugins_list.push({'ip': element.ip, 'plugins': element.service_plugins});
+            ml2_conf_list.push({'ip': element.ip, 'conf': element.conf})
+            restartList.push(element.ip);
+        }
+        service_plugins_body['plugins'] = service_plugins_list
+        ml2_conf_body['confs'] = ml2_conf_list
+        const service_plugins_res = await saveServicePluginsApi(service_plugins_body)
+        if (service_plugins_res.status !== 'ok' ){
+            this.$message.error("保存service_plugins失败");
+            this.restartingNeutronServer = false;
+            return
+        }
+        const ml2_res = await saveMl2ConfApi(ml2_conf_body)
+        if (ml2_res.status !== 'ok' ){
+            this.$message.error("保存ml2 conf失败")
+            this.restartingNeutronServer = false;
+            return
+        }
+        restartBody['ips'] = restartList
+        await restartNeutronServerApi(restartBody)
+        this.getConfigs()
+        this.restartingNeutronServer = false;
     },
     decreaseSteps() {
       if (this.activeSteps === 1) {
@@ -238,6 +281,7 @@ export default {
   },
   data() {
     return {
+      restartingNeutronServer: false,
       changingPlugin: false,
       pluginUploaded: false,
       actionUrl: "http://99.0.85.123:8080/openstack/upload",
@@ -247,14 +291,10 @@ export default {
       allPlatforms: [{ "key": "99.0.85.14", label: "99.0.85.14" }, { "key": "99.0.85.15", label: "99.0.85.15" }],
       nodesToInstall: [],
       choosedPlatforms: [],
-      activeSteps: 4,
+      activeSteps: 1,
       maxSteps: 4,
       configData:[
-        {"ip": "99.0.85.13", "version": "pike","status":true, "service_plugins":"router,bgp,trunk", "plugin_conf": "[Conf]\nurl=123.456.789\npassword=123456\nusername=admin\nurl=123.456.789\npassword=123456\nusername=admin"},
-        {"ip": "99.0.85.14", "version": "train","status":true, "service_plugins":"router,bgp,trunk", "plugin_conf": "[Conf]\nurl=123.456.789\npassword=123456\nusername=admin\nurl=123.456.789\npassword=123456\nusername=admin"},
-        {"ip": "99.0.85.13", "version": "pike","status":true,"service_plugins":"router,bgp,trunk", "plugin_conf": "[Conf]\nurl=123.456.789\npassword=123456\nusername=admin\nurl=123.456.789\npassword=123456\nusername=admin"},
-        {"ip": "99.0.85.13", "version": "pike","status":true, "service_plugins":"router,bgp,trunk", "plugin_conf": "[Conf]\nurl=123.456.789\npassword=123456\nusername=admin\nurl=123.456.789\npassword=123456\nusername=admin"},
-        {"ip": "99.0.85.13", "version": "pike","status":false,"service_plugins":"router,bgp,trunk", "plugin_conf": "[Conf]\nurl=123.456.789\npassword=123456\nusername=admin\nurl=123.456.789\npassword=123456\nusername=admin"},
+        {"ip": "99.0.85.13", "version": "pike","status":true, "service_plugins":"router,bgp,trunk", "conf": "[Conf]\nurl=123.456.789\npassword=123456\nusername=admin\nurl=123.456.789\npassword=123456\nusername=admin"},
       ],
     }
   }
